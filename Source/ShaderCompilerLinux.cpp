@@ -8,8 +8,15 @@
 #include <memory>
 #include <dirent.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 static const std::string gValidShaderExt[] = { "vert", "frag", "tesc", "tese", "geom", "comp"};
+
+int gFd;
+//char* myfifo = "/tmp/ShaderCompilerOutput";
 
 std::string exec(const char* cmd)
 {
@@ -33,6 +40,9 @@ class ShaderReCompiler : public FW::FileWatchListener
 
     void handleFileAction(FW::WatchID watchid, const std::string& dir, const std::string& filename, FW::Action action)
 	{
+		//if (action != FW::Action::Modified)
+		//	return ;
+
         std::size_t pos = filename.rfind(".");
         for (const std::string& ext : gValidShaderExt)
         {
@@ -41,7 +51,7 @@ class ShaderReCompiler : public FW::FileWatchListener
                 std::ostringstream cmd;
 
                 std::string cmplPath =  dir + '/' + filename;
-                std::cout << cmplPath << std::endl;
+                std::cout << cmplPath << (int)action << std::endl;
 
                 cmd << "glslc " << cmplPath << " -o " << cmplPath << ".spv" << " 2>&1";
                 // Exec glslc
@@ -51,7 +61,7 @@ class ShaderReCompiler : public FW::FileWatchListener
                 return ;
             }
         }
-        std::cout << dir << "/" << filename << "Don't know what is that" << std::endl;
+        std::cout << dir << "/" << filename << " Don't know what is that" << std::endl;
 	}
 };
 
@@ -98,14 +108,27 @@ int main(int argc, char** argv)
     }
 
     gFileWatcher = new FW::FileWatcher();
-    gWatchID = gFileWatcher->addWatch(argv[1], new ShaderReCompiler());
+    gWatchID = gFileWatcher->addWatch(argv[1], new ShaderReCompiler(), true);
+
+    //mkfifo(myfifo, 0666); 
+  
+    //char arr1[80]; 
+    // Open FIFO for write only 
+    //gFd = open(myfifo, O_WRONLY); 
 
     while(1)
 	{
+		sleep(1);
 		gFileWatcher->update();
 	}
 
     /**/
+
+    //while (1) 
+    //{ 
+    //    //write(fd, arr2, strlen(arr2)+1); 
+    //} 
+    //close(gFd); 
 
     std::cin.get();
 
