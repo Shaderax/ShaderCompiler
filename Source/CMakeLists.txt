@@ -6,3 +6,5 @@ Set( SRC
     main.cpp)
 
 add_executable(ShaderCompilerSource ${SRC})
+
+target_link_libraries(ShaderCompilerSource SimpleFileWatcher)
