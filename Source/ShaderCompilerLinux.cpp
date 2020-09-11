@@ -58,6 +58,7 @@ class ShaderReCompiler : public FW::FileWatchListener
                 std::string log = exec(cmd.str().c_str());
                 std::cout << "Exec return: " << log << std::endl;
                 std::cout << "End Log" << std::endl;
+
                 return ;
             }
         }

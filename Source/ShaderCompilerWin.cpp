@@ -7,15 +7,36 @@
 #include <cstdio>
 #include <sstream>
 
-static const std::string gValidShaderExt[] = { ".vert", ".frag", ".tesc", ".tese", ".geom", ".comp"};
+static const std::string gValidShaderExt[] = { "vert", "frag", "tesc", "tese", "geom", "comp"};
+HANDLE hMutex;
+
+
+/**
+ * One Instance ? Genre si ça bloque POur un dossier et bé rip si on veut que ça fasse un autre dossier aussi. Faudrait une instance par dossier.
+ * 
+ **/
+
+bool CheckIfOnInstance( char* argv )
+{
+    hMutex = OpenMutex(
+      MUTEX_ALL_ACCESS, 0, argv);
+
+    if (!hMutex)
+      hMutex = CreateMutex(0, 0, argv);
+    else
+    {
+        ReleaseMutex(hMutex);
+        return false;
+    }
+
+    return true;
+}
 
 std::string exec(const char* cmd)
 {
     std::array<char, 128> buffer;
     std::string result;
     std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
-    // _popen Win
-    // popen Linux
 
     if (!pipe)
         throw std::runtime_error("popen() failed!");
@@ -25,6 +46,9 @@ std::string exec(const char* cmd)
 
     return result;
 }
+
+HANDLE gHPipe;
+DWORD dwRead;
 
 class ShaderReCompiler : public FW::FileWatchListener
 {
@@ -36,32 +60,26 @@ class ShaderReCompiler : public FW::FileWatchListener
         std::size_t pos = filename.rfind(".");
         for (const std::string& ext : gValidShaderExt)
         {
-            if (!filename.compare(pos, ext.size(), ext))
+            if (pos != std::string::npos && filename.substr(pos + 1) == ext)
             {
                 std::ostringstream cmd;
 
                 std::string cmplPath =  dir + '/' + filename;
-                std::cout << cmplPath << std::endl;
+                std::cout << cmplPath << (int)action << std::endl;
 
-                cmd << "glslc " << cmplPath << ' ' << cmplPath << ".spv";
+                cmd << "glslc " << cmplPath << " -o " << cmplPath << ".spv" << " 2>&1";
                 // Exec glslc
                 std::string log = exec(cmd.str().c_str());
                 std::cout << "Exec return: " << log << std::endl;
+                WriteFile(gHPipe, log.c_str(), log.size() + 1, &dwRead, NULL);
+                std::cout << "End Log" << std::endl;
+
                 return ;
             }
         }
         std::cout << dir << "/" << filename << "Don't know what is that" << std::endl;
 	}
 };
-
-    /**
-     * Je dois recevoir en param un dossier, et moi je m'occupe de savoir lequel est un shader
-     * A chaque fois qu'il y a un truc qui bouge dans le dossier je recup ce qui à été fait et le fichier en question et le fichier je check si c'est un shader:
-
-     * Si oui alors j'exec la command glslc <filename> -o <filename>+.spv
-     * Et le résultat de la commande est envoyé dans ShaderCompilerOutput
-     *  Si ya pas d'erreur alors "" sinon l'error.
-     **/
 
 bool DirExists(const std::string& inDirName)
 {
@@ -93,21 +111,15 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    /** Check One instance*/
+    if (!CheckIfOnInstance(argv[1]))
+        return 0;
+
     gFileWatcher = new FW::FileWatcher();
-    gWatchID = gFileWatcher->addWatch(argv[1], new ShaderReCompiler());
 
-    while(1)
-	{
-		gFileWatcher->update();
-	}
-
-    /**/
-
-    HANDLE hPipe;
     char buffer[1024];
-    DWORD dwRead;
 
-    hPipe = CreateNamedPipeA(TEXT("\\\\.\\pipe\\ShaderCompilerOutput"),
+    gHPipe = CreateNamedPipeA(TEXT("\\\\.\\pipe\\ShaderCompilerOutput"),
                         PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_WAIT | PIPE_READMODE_MESSAGE,
                         5,
@@ -116,9 +128,10 @@ int main(int argc, char** argv)
                         NMPWAIT_USE_DEFAULT_WAIT,
                         NULL);
 
-    if (hPipe == INVALID_HANDLE_VALUE)
+    if (gHPipe == INVALID_HANDLE_VALUE)
         throw std::runtime_error("hPipe == nullptr");
 
+/*
     if (ConnectNamedPipe(hPipe, NULL) != FALSE)
         {
             while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE)
@@ -128,8 +141,17 @@ int main(int argc, char** argv)
                 printf("%s", buffer);
             }
         }
+*/
 
-    DisconnectNamedPipe(hPipe);
+    gWatchID = gFileWatcher->addWatch(argv[1], new ShaderReCompiler(), true);
+
+    while(1)
+	{
+		gFileWatcher->update();
+	}
+
+    //DisconnectNamedPipe(gHPipe);
+    ReleaseMutex(hMutex);
 
     std::cin.get();
 
