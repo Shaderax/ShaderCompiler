@@ -14,7 +14,7 @@ int main(void)
 
     mkfifo(myfifo, 0666); 
 
-    gFd = open(myfifo,O_RDONLY); 
+    gFd = open(myfifo, O_RDONLY); 
 
 	if (gFd == -1)
 		return -1;
