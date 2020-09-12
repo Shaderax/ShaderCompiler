@@ -1,14 +1,4 @@
-#include <stdexcept>
-#include <iostream>
-#include <string>
-#include <FileWatcher/FileWatcher.h>
-#include <array>
-#include <cstdio>
-#include <sstream>
-#include <memory>
 #include <dirent.h>
-#include <errno.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
