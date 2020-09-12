@@ -10,12 +10,6 @@
 static const std::string gValidShaderExt[] = { "vert", "frag", "tesc", "tese", "geom", "comp"};
 HANDLE hMutex;
 
-
-/**
- * One Instance ? Genre si ça bloque POur un dossier et bé rip si on veut que ça fasse un autre dossier aussi. Faudrait une instance par dossier.
- * 
- **/
-
 bool CheckIfOnInstance( char* argv )
 {
     hMutex = OpenMutex(
@@ -68,7 +62,6 @@ class ShaderReCompiler : public FW::FileWatchListener
                 std::cout << cmplPath << (int)action << std::endl;
 
                 cmd << "glslc " << cmplPath << " -o " << cmplPath << ".spv" << " 2>&1";
-                // Exec glslc
                 std::string log = exec(cmd.str().c_str());
                 std::cout << "Exec return: " << log << std::endl;
                 WriteFile(gHPipe, log.c_str(), log.size() + 1, &dwRead, NULL);
@@ -147,6 +140,7 @@ int main(int argc, char** argv)
 
     while(1)
 	{
+		Sleep(500);
 		gFileWatcher->update();
 	}
 
