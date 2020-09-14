@@ -1,6 +1,7 @@
 #include "ShaderCompiler.hpp"
 #include <chrono>
 #include <thread>
+#include <cstring>
 
 int main(int argc, char** argv)
 {
