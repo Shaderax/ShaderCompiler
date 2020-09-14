@@ -2,4 +2,4 @@ cmake_minimum_required(VERSION  3.0)
 
 project(ThirdParty)
 
-add_subdirectory(SimpleFileWatcher)
+add_subdirectory(efsw)

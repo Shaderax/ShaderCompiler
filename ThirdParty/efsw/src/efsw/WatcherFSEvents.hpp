@@ -6,13 +6,30 @@
 #if EFSW_PLATFORM == EFSW_PLATFORM_FSEVENTS
 
 #include <efsw/WatcherGeneric.hpp>
+#include <efsw/FileInfo.hpp>
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreServices/CoreServices.h>
 #include <set>
+#include <vector>
 
 namespace efsw {
 
 class FileWatcherFSEvents;
+
+class FSEvent
+{
+	public:
+		FSEvent( std::string path, long flags, Uint64 id ) :
+			Path( path ),
+			Flags( flags ),
+			Id ( id )
+		{
+		}
+
+		std::string Path;
+		long Flags;
+		Uint64 Id;
+};
 
 class WatcherFSEvents : public Watcher
 {
@@ -26,9 +43,9 @@ class WatcherFSEvents : public Watcher
 		void init();
 
 		void initAsync();
-		
-		void handleAction( const std::string& path, const Uint32& flags );
-		
+
+		void handleActions( std::vector<FSEvent> & events );
+
 		void process();
 
 		FileWatcherFSEvents * FWatcher;
@@ -42,6 +59,8 @@ class WatcherFSEvents : public Watcher
 		bool initializedAsync;
 
 		std::set<std::string> DirsChanged;
+
+		void sendFileAction( WatchID watchid, const std::string& dir, const std::string& filename, Action action, std::string oldFilename = "" );
 };
 
 }

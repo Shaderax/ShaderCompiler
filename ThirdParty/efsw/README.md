@@ -1,5 +1,8 @@
-Entropia File System Watcher
+Entropia File System Watcher ![efsw](https://web.ensoft.dev/efsw/efsw-logo.svg)
 ============================
+
+[![build status](https://img.shields.io/github/workflow/status/SpartanJ/efsw/build)](https://github.com/SpartanJ/efsw/actions?query=workflow%3Abuild)
+
 **efsw** is a C++ cross-platform file system watcher and notifier.
 
 **efsw** monitors the file system asynchronously for changes to files and directories by watching a list of specified paths, and raises events when a directory or file change.
@@ -29,57 +32,58 @@ This should never happen, except for the Kqueue implementation, see `Platform li
 **Some example code:**
 --------------------
 
-    :::c++
-	// Inherits from the abstract listener class, and implements the the file action handler
-	class UpdateListener : public efsw::FileWatchListener
+```c++
+// Inherits from the abstract listener class, and implements the the file action handler
+class UpdateListener : public efsw::FileWatchListener
+{
+public:
+	UpdateListener() {}
+
+	void handleFileAction( efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "" )
 	{
-	public:
-		UpdateListener() {}
-
-		void handleFileAction( efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "" )
+		switch( action )
 		{
-			switch( action )
-			{
-			case efsw::Actions::Add:
-				std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Added" << std::endl;
-				break;
-			case efsw::Actions::Delete:
-				std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Delete" << std::endl;
-				break;
-			case efsw::Actions::Modified:
-				std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Modified" << std::endl;
-				break;
-			case efsw::Actions::Moved:
-					std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Moved from (" << oldFilename << ")" << std::endl;
-				break;
-			default:
-				std::cout << "Should never happen!" << std::endl;
-			}
+		case efsw::Actions::Add:
+			std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Added" << std::endl;
+			break;
+		case efsw::Actions::Delete:
+			std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Delete" << std::endl;
+			break;
+		case efsw::Actions::Modified:
+			std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Modified" << std::endl;
+			break;
+		case efsw::Actions::Moved:
+				std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Moved from (" << oldFilename << ")" << std::endl;
+			break;
+		default:
+			std::cout << "Should never happen!" << std::endl;
 		}
-	};
+	}
+};
 
-	// Create the file system watcher instance
-    // efsw::FileWatcher allow a first boolean parameter that indicates if it should start with the generic file watcher instead of the platform specific backend
-	efsw::FileWatcher * fileWatcher = new efsw::FileWatcher();
+// Create the file system watcher instance
+// efsw::FileWatcher allow a first boolean parameter that indicates if it should start with the generic file watcher instead of the platform specific backend
+efsw::FileWatcher * fileWatcher = new efsw::FileWatcher();
 
-	// Create the instance of your efsw::FileWatcherListener implementation
-	UpdateListener * listener = new UpdateListener();
+// Create the instance of your efsw::FileWatcherListener implementation
+UpdateListener * listener = new UpdateListener();
 
-	// Add a folder to watch, and get the efsw::WatchID
-	// It will watch the /tmp folder recursively ( the third parameter indicates that is recursive )
-	// Reporting the files and directories changes to the instance of the listener
-	efsw::WatchID watchID = fileWatcher->addWatch( "/tmp", listener, true );
+// Add a folder to watch, and get the efsw::WatchID
+// It will watch the /tmp folder recursively ( the third parameter indicates that is recursive )
+// Reporting the files and directories changes to the instance of the listener
+efsw::WatchID watchID = fileWatcher->addWatch( "/tmp", listener, true );
 
-    // Adds another directory to watch. This time as non-recursive.
-    efsw::WatchID watchID2 = fileWatcher->addWatch( "/usr", listener, false );
+// Adds another directory to watch. This time as non-recursive.
+efsw::WatchID watchID2 = fileWatcher->addWatch( "/usr", listener, false );
 
-	// Start watching asynchronously the directories
-	fileWatcher.watch();
+// Start watching asynchronously the directories
+fileWatcher->watch();
 
-	// Remove the second watcher added
-    // You can also call removeWatch by passing the watch path ( it must end with an slash or backslash in windows, since that's how internally it's saved )
-	fileWatcher->removeWatch( watchID2 );
-	
+// Remove the second watcher added
+// You can also call removeWatch by passing the watch path ( it must end with an slash or backslash in windows, since that's how internally it's saved )
+fileWatcher->removeWatch( watchID2 );
+```
+
 **Dependencies**
 --------------
 None :)
@@ -100,9 +104,14 @@ or
 
 `premake4 xcode4` to generate Xcode 4 project.
 
+There is also a cmake file that I don't oficially support but it works just fine, provided by [Mohammed Nafees](https://github.com/mnafees) and improved by [Eugene Shalygin](https://github.com/zeule).
 
 **Platform limitations and clarifications**
 -------------------------------------------
+
+Directory paths are expected to be encoded as UTF-8 strings in all platforms.
+
+handleFileAction returns UTF-8 strings in all platforms.
 
 Windows and FSEvents Mac OS X implementation can't follow symlinks ( it will ignore followSymlinks() and allowOutOfScopeLinks() ).
 
@@ -112,11 +121,18 @@ OS X will only use Kqueue if OS X version is below to 10.5, and this implementat
 
 FSEvents for OS X Lion and beyond in some cases will generate more actions that in reality ocurred, since fine-grained implementation of FSEvents doesn't give the order of the actions retrieved, in some cases i need to guess/aproximate the order of them.
 
-Generic watcher relies on the inode information to detect file and directories renames/move. Since Windows has no concept of inodes as Unix-y platforms do, there is no current reliable way of determining file/directory movement on Windows without help from the Windows API.
+Generic watcher relies on the inode information to detect file and directories renames/move. Since Windows has no concept of inodes as Unix platforms do, there is no current reliable way of determining file/directory movement on Windows without help from the Windows API ( this is replaced with Add/Delete events ).
 
 Linux versions below 2.6.13 are not supported, since inotify wasn't implemented yet. I'm not interested in support older kernels, since i don't see the point. If someone needs this open an issue in the issue tracker and i may consider implenent a dnotify backend.
 
 OS-independent watcher, Kqueue and FSEvents for OS X below 10.5 keep cache of the directories structures, to be able to detect changes in the directories. This means that there's a memory overhead for this backends.
+
+**Useful information**
+--------------------
+The project also comes with a C API wrapper, contributed by [Sepul Sepehr Taghdisian](https://github.com/septag).
+
+There's a string manipulation class not exposed in the efsw header ( efsw::String ) that can be used to make string encoding conversion.
+
 
 **Clarifications**
 ----------------

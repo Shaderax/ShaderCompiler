@@ -1,7 +1,9 @@
 #include <efsw/FileSystem.hpp>
 #include <efsw/platform/platformimpl.hpp>
 
-#include <sys/stat.h>
+#if EFSW_OS == EFSW_OS_MACOSX
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
 namespace efsw {
 
@@ -28,7 +30,7 @@ bool FileSystem::slashAtEnd( std::string &dir )
 
 void FileSystem::dirAddSlashAtEnd( std::string& dir )
 {
-	if ( dir.size() && dir[ dir.size() - 1 ] != getOSSlash() )
+	if ( dir.size() > 1 && dir[ dir.size() - 1 ] != getOSSlash() )
 	{
 		dir.push_back( getOSSlash() );
 	}
@@ -36,7 +38,7 @@ void FileSystem::dirAddSlashAtEnd( std::string& dir )
 
 void FileSystem::dirRemoveSlashAtEnd( std::string& dir )
 {
-	if ( dir.size() && dir[ dir.size() - 1 ] == getOSSlash() )
+	if ( dir.size() > 1 && dir[ dir.size() - 1 ] == getOSSlash() )
 	{
 		dir.erase( dir.size() - 1 );
 	}
@@ -92,6 +94,41 @@ std::string FileSystem::getLinkRealPath( std::string dir, std::string& curPath )
 
 	/// if it's not a link return nothing
 	return "";
+}
+
+std::string FileSystem::precomposeFileName( const std::string& name )
+{
+#if EFSW_OS == EFSW_OS_MACOSX
+	CFStringRef cfStringRef = CFStringCreateWithCString(kCFAllocatorDefault, name.c_str(), kCFStringEncodingUTF8);
+	CFMutableStringRef cfMutable = CFStringCreateMutableCopy(NULL, 0, cfStringRef);
+
+	CFStringNormalize(cfMutable,kCFStringNormalizationFormC);
+
+	char c_str[255 + 1];
+	CFStringGetCString(cfMutable, c_str, sizeof(c_str)-1, kCFStringEncodingUTF8);
+
+	CFRelease(cfStringRef);
+	CFRelease(cfMutable);
+
+	return std::string(c_str);
+#else
+	return name;
+#endif
+}
+
+bool FileSystem::isRemoteFS( const std::string& directory )
+{
+	return Platform::FileSystem::isRemoteFS( directory );
+}
+
+bool FileSystem::changeWorkingDirectory( const std::string& directory )
+{
+	return Platform::FileSystem::changeWorkingDirectory( directory );
+}
+
+std::string FileSystem::getCurrentWorkingDirectory()
+{
+	return Platform::FileSystem::getCurrentWorkingDirectory();
 }
 
 }

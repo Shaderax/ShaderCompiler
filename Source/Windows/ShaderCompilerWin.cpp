@@ -2,7 +2,6 @@
 #include <stdexcept>
 #include <iostream>
 #include <string>
-#include <FileWatcher/FileWatcher.h>
 #include <array>
 #include <cstdio>
 #include <sstream>
@@ -13,7 +12,7 @@ HANDLE hMutex;
 HANDLE gHPipe;
 DWORD dwRead;
 
-bool CheckIfOnInstance(char *argv)
+bool CheckIfOnInstance( const char* argv)
 {
     hMutex = OpenMutex(
         MUTEX_ALL_ACCESS, 0, argv);
@@ -44,9 +43,9 @@ static std::string Exec(const char *cmd)
     return result;
 }
 
-void ShaderReCompiler::handleFileAction(FW::WatchID watchid, const std::string &dir, const std::string &filename, FW::Action action)
+void ShaderReCompiler::handleFileAction( efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename)
 {
-    if (action != FW::Action::Modified)
+    if (action != efsw::Action::Modified)
         return;
 
     std::size_t pos = filename.rfind(".");
@@ -56,7 +55,7 @@ void ShaderReCompiler::handleFileAction(FW::WatchID watchid, const std::string &
         {
             std::ostringstream cmd;
 
-            std::string cmplPath = dir + '/' + filename;
+            std::string cmplPath = dir + "/" + filename;
             std::cout << cmplPath << (int)action << std::endl;
 
             cmd << "glslc " << cmplPath << " -o " << cmplPath << ".spv"

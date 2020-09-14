@@ -10,7 +10,7 @@ int gFd;
 char *myfifo = "/tmp/ShaderCompilerOutput";
 int rc;
 
-bool CheckIfOnInstance(char *argv)
+bool CheckIfOnInstance( const char* argv)
 {
     std::ostringstream mutexPath;
     std::size_t hashed = std::hash<std::string>{}(argv);
@@ -50,9 +50,9 @@ static std::string Exec(const char *cmd)
     return result;
 }
 
-void ShaderReCompiler::handleFileAction(FW::WatchID watchid, const std::string &dir, const std::string &filename, FW::Action action)
+void ShaderReCompiler::handleFileAction( efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename)
 {
-    if (action != FW::Action::Modified)
+    if (action != efsw::Action::Modified)
         return;
 
     std::size_t pos = filename.rfind(".");

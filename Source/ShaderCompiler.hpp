@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <string>
-#include <FileWatcher/FileWatcher.h>
+#include <efsw/efsw.hpp>
 #include <array>
 #include <cstdio>
 #include <sstream>
@@ -13,15 +13,15 @@
 
 const std::string gValidShaderExt[] = { "vert", "frag", "tesc", "tese", "geom", "comp"};
 
-class ShaderReCompiler : public FW::FileWatchListener
+class ShaderReCompiler : public efsw::FileWatchListener
 {
 public:
     ShaderReCompiler( void ) = default;
 
-    void handleFileAction(FW::WatchID watchid, const std::string& dir, const std::string& filename, FW::Action action);
+    void handleFileAction( efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename = "" );
 };
 
 bool        CreatePipe( void );
 void        Close( void );
 bool        DirExists(const std::string& inDirName);
-bool        CheckIfOnInstance( char* argv );
+bool        CheckIfOnInstance( const char* argv );

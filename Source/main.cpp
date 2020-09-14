@@ -16,26 +16,34 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    // Add / at end TODO
+    std::size_t len = std::strlen(argv[1]);
+    std::string dir;
+    dir = argv[1];
+    dir += "/";
+
     /** Check One instance*/
-    if (!CheckIfOnInstance(argv[1]))
+    if (!CheckIfOnInstance(dir.c_str()))
         return 0;
 
-    FW::FileWatcher* fileWatcher = 0;
-    FW::WatchID watchID = 0;
-
-    fileWatcher = new FW::FileWatcher();
+    // Create the file system watcher instance
+    efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
+    // Create the instance of your efsw::FileWatcherListener implementation
+    ShaderReCompiler* recompiler = new ShaderReCompiler();
+    // Add a folder to watch, and get the efsw::WatchID
+    // Reporting the files and directories changes to the instance of the listener
+    efsw::WatchID watchID = fileWatcher->addWatch( dir.c_str(), recompiler, true );
+    // Start watching asynchronously the directories
 
     char buffer[1024];
 
     if (!CreatePipe())
         return -1;
 
-    watchID = fileWatcher->addWatch(argv[1], new ShaderReCompiler(), true);
-
     while(1)
 	{
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		fileWatcher->update();
+        fileWatcher->watch();
 	}
 
     Close();

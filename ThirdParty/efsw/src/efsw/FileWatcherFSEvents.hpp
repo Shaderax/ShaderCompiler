@@ -10,6 +10,7 @@
 #include <efsw/WatcherFSEvents.hpp>
 #include <map>
 #include <list>
+#include <vector>
 
 namespace efsw
 {
@@ -32,11 +33,8 @@ enum FSEventEvents
 	efswFSEventStreamEventFlagItemIsSymlink			= 0x00040000,
 	efswFSEventsModified							= efswFSEventStreamEventFlagItemFinderInfoMod	|
 													  efswFSEventStreamEventFlagItemModified		|
-													  efswFSEventStreamEventFlagItemInodeMetaMod	|
-													  efswFSEventStreamEventFlagItemChangeOwner		|
-													  efswFSEventStreamEventFlagItemXattrMod
+													  efswFSEventStreamEventFlagItemInodeMetaMod
 };
-
 
 /// Implementation for Win32 based on ReadDirectoryChangesW.
 /// @class FileWatcherFSEvents

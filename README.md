@@ -8,4 +8,4 @@ The executable uses a named pipe to transmit glslc program return errors and so 
 ## Disclaimer
 Not Complete for Windows  
 Ok for Linux  
-This project use [SimpleFileWatcher](https://github.com/apetrone/simplefilewatcher) to observe a folder.
+This project use [efsw](https://github.com/SpartanJ/efsw) to observe a folder.

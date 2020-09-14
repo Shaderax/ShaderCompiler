@@ -1,7 +1,7 @@
 /**
 	@author Martín Lucas Golini
 
-	Copyright (c) 2012 Martín Lucas Golini
+	Copyright (c) 2013 Martín Lucas Golini
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@
 
 #include <string>
 #include <list>
-#include <iostream>
 
 #if defined(_WIN32)
 	#ifdef EFSW_DYNAMIC
@@ -95,7 +94,8 @@ enum Error
 	FileRepeated	= -2,
 	FileOutOfScope	= -3,
 	FileNotReadable	= -4,
-	Unspecified		= -5
+	FileRemote		= -5, /** Directory in remote file system ( create a generic FileWatcher instance to watch this directory ). */
+	Unspecified		= -6
 };
 
 class EFSW_API Log
@@ -121,7 +121,7 @@ class EFSW_API FileWatcher
 		FileWatcher();
 
 		/// Constructor that lets you force the use of the Generic File Watcher
-		FileWatcher( bool useGenericFileWatcher );
+		explicit FileWatcher( bool useGenericFileWatcher );
 
 		virtual ~FileWatcher();
 
@@ -178,10 +178,6 @@ class EFSW_API FileWatcher
 class FileWatchListener
 {
 	public:
-		FileWatchListener() {}
-
-		virtual ~FileWatchListener() {}
-
 		/// Handles the action file action
 		/// @param watchid The watch id for the directory
 		/// @param dir The directory

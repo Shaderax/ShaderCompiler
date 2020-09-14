@@ -2,6 +2,7 @@
 #include <efsw/System.hpp>
 #include <efsw/FileSystem.hpp>
 #include <signal.h>
+#include <iostream>
 
 bool STOP = false;
 
@@ -35,13 +36,14 @@ class UpdateListener : public efsw::FileWatchListener
 		}
 };
 
-efsw::WatchID handleWathID( efsw::WatchID watchid )
+efsw::WatchID handleWatchID( efsw::WatchID watchid )
 {
 	switch ( watchid )
 	{
 		case efsw::Errors::FileNotFound:
 		case efsw::Errors::FileRepeated:
 		case efsw::Errors::FileOutOfScope:
+		case efsw::Errors::FileRemote:
 		case efsw::Errors::Unspecified:
 		{
 			std::cout << efsw::Errors::Log::getLastErrorLog().c_str() << std::endl;
@@ -101,7 +103,7 @@ int main(int argc, char **argv)
 		std::cout << "CurPath: " << CurPath.c_str() << std::endl;
 
 		/// add a watch to the system
-		handleWathID( fileWatcher.addWatch( CurPath + "test" + efsw::FileSystem::getOSSlash(), ul, true ) );
+		handleWatchID( fileWatcher.addWatch( CurPath + "test", ul, true ) );
 
 		/// starts watching
 		fileWatcher.watch();
@@ -109,7 +111,7 @@ int main(int argc, char **argv)
 		/// adds another watch after started watching...
 		efsw::System::sleep( 100 );
 
-		efsw::WatchID watchID = handleWathID( fileWatcher.addWatch( CurPath + "test2", ul, true ) );
+		efsw::WatchID watchID = handleWatchID( fileWatcher.addWatch( CurPath + "test2", ul, true ) );
 
 		/// delete the watch
 		if ( watchID > 0 )
